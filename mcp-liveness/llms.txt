@@ -1,6 +1,6 @@
 # MCP Liveness
 
-> Whether a registry MCP server works for a stock client, and what changed in its tools. Free, no key.
+> Does an MCP server work for a stock client? By registry name or URL. Tool drift too. Free, no key.
 
 A registry listing is a claim the publisher typed. Nothing verifies it at publish time,
 so an agent picking a server out of the catalogue has no way to know whether the endpoint
@@ -9,17 +9,28 @@ This makes one `initialize` call with no credential and says what a stock client
 On a 401 it walks the discovery chain the spec defines — RFC 9728, RFC 8414, RFC 7591 —
 and reports whether a client nobody has heard of could register itself, or whether a
 person has to create one. Both are HTTP 401 and the registry lists them identically.
-Measured on a random sample of 1200 remote listings on 2026-09-12: 63.0% answer a stock client, 21.8% want a credential, and 14.8% are not an MCP server at the address they gave. Of the ones wanting a credential, 17.2% published nothing a stock client could discover.
+Name the server by its official registry name, or — when it is not in the registry or is
+listed under another name — by its endpoint URL (`/v1/alive?url=…`, or `url` on the MCP
+tool). A URL must be public https: its host is resolved and refused if any address is
+private, loopback, link-local, multicast or a cloud-metadata address, and every redirect
+is checked the same way before it is followed. A URL check makes the `initialize` request
+only — it does not walk the OAuth discovery chain — and is limited to
+30 a minute per caller, counted per server instance. A name that is not in the
+registry answers `not_listed` with that next step: pass `url` instead.
+Every liveness answer ends with `monitor`, one line: To watch an endpoint continuously, agentcheck monitors one target hourly for free and emails you when it changes: call `agentcheck_create_target` on https://agentwares-agentcheck.vercel.app/api/mcp.
+Measured on a random sample of 1200 remote listings on 2026-10-06: 65.9% answer a stock client, 21.9% want a credential, and 11.8% are not an MCP server at the address they gave. Of the ones wanting a credential, 17.1% published nothing a stock client could discover.
 Do not probe the catalogue yourself. Every remote listing is probed once a month and the
 answers are served as static files, so reading them costs one request instead of 19,000
-and costs the registry's servers nothing at all. `/v1/alive` is for a single name you
-care about right now; the files are for choosing.
+and costs the registry's servers nothing at all. `/v1/alive` is for a single server you
+care about right now; the files are for choosing, and each line carries its endpoint in
+`u`, so a list of URLs can be matched against them without probing anything.
 Every request identifies itself as `agentwares-mcp-liveness/0.1 (+https://agentwares-agentcheck.vercel.app/bot)`. It never sends a credential, never
 registers a client, never retries a refusal and never evades anything.
 
 ## Links
 
 - [Check one server](https://agentwares-mcp-liveness.vercel.app/v1/alive?name=io.github.agentwares/mcp-liveness): GET, JSON, no key — probes live
+- [Check one endpoint by URL](https://agentwares-mcp-liveness.vercel.app/v1/alive?url=https%3A%2F%2Fagentwares-mcp-liveness.vercel.app%2Fmcp): GET, JSON, no key — for a server that is not in the registry or is named differently there; public https only
 - [Every listing, precomputed](https://agentwares-mcp-liveness.vercel.app/index.ndjson): one line per remote listing with its last outcome; fetch this instead of probing
 - [The ones to skip](https://agentwares-mcp-liveness.vercel.app/unreachable.ndjson): only the listings whose endpoint is not an MCP server — the smallest useful file
 - [What is in those files](https://agentwares-mcp-liveness.vercel.app/index.meta.json): counts, causes, sizes, build time
@@ -31,22 +42,26 @@ registers a client, never retries a refusal and never evades anything.
 
 ## What this cannot tell you
 
-- [Whether a server stays up after this check](https://agentwares-agentcheck.vercel.app): this is one check from outside, right now; agentcheck monitors a server you publish and alerts you when it stops answering
+- [Whether a server stays up after this check](https://agentwares-agentcheck.vercel.app/api/mcp): this is one check from outside, right now; agentcheck monitors one target hourly for free and emails you when it changes — call `agentcheck_create_target` on this MCP endpoint
 
 ## MCP tools
 
-- `mcp_liveness_check` (name, skipCredentialCheck?): Given a server's exact name in the official MCP registry, make one `initialize` call to
-the endpoint its listing names and report what a client with no credential gets.
+- `mcp_liveness_check` (name?, url?, skipCredentialCheck?): Make one `initialize` call to an MCP server's endpoint with no credential and report what
+a stock client gets. Name the server by its exact official-registry `name`, or by its
+endpoint `url` when it is not in the registry or is listed under another name — pass
+exactly one of the two.
 
 Outcomes: `usable` (it connected and negotiated a protocol version), `needs_credential`
-(401 or 403 — the answer then says whether a credential can be obtained in-band or
-whether a person has to create one), `charged` (402, access is for sale), `unreachable`
-(the listed endpoint is not an MCP server: wrong URL, dead host, or a 200 that is not
-JSON-RPC), `local_only` (no remote endpoint; it must be spawned as a process), and
-`not_listed` (no server with that exact name).
+(401 or 403 — by name, the answer then says whether a credential can be obtained in-band
+or whether a person has to create one), `charged` (402, access is for sale),
+`unreachable` (not an MCP server there: wrong URL, dead host, or a 200 that is not
+JSON-RPC), and, for a name only, `local_only` (no remote endpoint; it must be spawned as a
+process) and `not_listed` (no server with that exact name — pass `url` instead).
 
-Call this before spending a call on a server you found in the catalogue. Roughly two in
-five remote listings do not answer a stock client.
+A `url` must be public https: private, loopback, link-local, multicast and cloud-metadata
+addresses are refused, redirects are re-checked, and URL checks are limited to 30 a
+minute per caller. Call this before spending a call on a server; roughly two in five
+remote registry listings do not answer a stock client.
 - `mcp_liveness_explain_outcomes`: Return the six outcomes this server can report, what each means for an agent choosing a server from the registry, and what to do next for each. Makes no request and costs nothing; call it once to interpret mcp_liveness_check results.
 - `mcp_liveness_drift` (name, since?): Given a server's exact name in the official MCP registry, report which of its tools were
 added, removed, or had their description, input schema or output schema change between

@@ -27,7 +27,7 @@ Annotations: `readOnlyHint`, `idempotentHint`
 
 ## `agentcheck_create_target`
 
-Enroll something to monitor: an http endpoint (JSON or OpenAI-style chat), a remote MCP server (Streamable HTTP url) or an A2A agent (origin with /.well-known/agent-card.json). Pass `checks` to create checks in the same call (POST /api/v1/probe proposes three). Returns the target id, the public status page, the badge SVG URL and a README snippet. The first check runs on the next minute tick; call agentcheck_run_now to run immediately. Free tier: 1 target, hourly; Starter+: 5-minute checks. Requires an API key.
+Enroll something to monitor: an http endpoint (JSON or OpenAI-style chat), a remote MCP server (Streamable HTTP url) or an A2A agent (origin with /.well-known/agent-card.json). Pass `checks` to create checks in the same call (POST /api/v1/probe proposes three). Returns the target id, the public status page, the badge SVG URL and a README snippet. The first check runs on the next scheduled tick, within five minutes; call agentcheck_run_now to run immediately. Free tier: 1 target, hourly; Starter+: 5-minute checks. Requires an API key.
 
 | Parameter      | Type                                   | Required | Description                                                                                                                                       |
 | -------------- | -------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,7 +35,7 @@ Enroll something to monitor: an http endpoint (JSON or OpenAI-style chat), a rem
 | `slug`         | string                                 | no       | URL slug for /<owner>/<slug>; defaults to a slug of the name                                                                                      |
 | `kind`         | `"http"` \| `"mcp"` \| `"a2a"`         | yes      | http (JSON or chat endpoint), mcp (Streamable HTTP url, or npx/uvx package spec), a2a (agent card)                                                |
 | `url`          | string                                 | no       | endpoint URL (http/mcp) or the agent's origin (a2a)                                                                                               |
-| `packageSpec`  | string                                 | no       | mcp only: `npx @org/server` / `uvx server` — runs on the mcpcheck runner, not the minute checks                                                   |
+| `packageSpec`  | string                                 | no       | mcp only: `npx @org/server` / `uvx server` — runs on the mcpcheck runner, not the scheduled checks                                                |
 | `agentCardUrl` | string                                 | no       | a2a: explicit agent card URL when it is not at /.well-known/agent-card.json                                                                       |
 | `format`       | `"openai_chat"` \| `"json"` \| `"get"` | no       | http: openai_chat (POST /chat/completions body), json (raw POST), get (plain fetch)                                                               |
 | `headers`      | object                                 | no       | extra request headers                                                                                                                             |

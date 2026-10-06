@@ -6,7 +6,7 @@ Given a server's name in the official MCP registry, whether a stock client can a
 | --------------------- | -------------------------------------------------------------------------------- |
 | **Service**           | https://agentwares-mcp-liveness.vercel.app                                       |
 | **MCP endpoint**      | `https://agentwares-mcp-liveness.vercel.app/mcp` (Streamable HTTP)               |
-| **Registry name**     | `io.github.agentwares/mcp-liveness` (v0.2.0)                                     |
+| **Registry name**     | `io.github.agentwares/mcp-liveness` (v0.3.0)                                     |
 | **Tools**             | `mcp_liveness_check`, `mcp_liveness_explain_outcomes`, `mcp_liveness_drift`      |
 | **In this directory** | [`server.json`](server.json) · [`llms.txt`](llms.txt) · [tool reference](API.md) |
 

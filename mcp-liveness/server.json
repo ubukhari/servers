@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.agentwares/mcp-liveness",
-  "description": "Whether a registry MCP server works for a stock client, and what changed in its tools. Free, no key.",
-  "version": "0.2.0",
+  "description": "Does an MCP server work for a stock client? By registry name or URL. Tool drift too. Free, no key.",
+  "version": "0.3.0",
   "websiteUrl": "https://agentwares-mcp-liveness.vercel.app",
   "repository": {
     "url": "https://github.com/agentwares/servers",

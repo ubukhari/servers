@@ -56,7 +56,7 @@
       "name": "Team",
       "price_usd_monthly": 499,
       "targets": 30,
-      "check_interval_sec": 60,
+      "check_interval_sec": 300,
       "history_days": 365,
       "features": [
         "badge",

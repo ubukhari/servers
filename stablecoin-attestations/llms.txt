@@ -10,7 +10,7 @@ Coverage, plainly: 26 issuers are in the registry and 6 of them have a parsed at
 
 Pricing: $0.02 per stablecoin_reserves call, drawn from a prepaid balance; sample=true is free and needs no key.
 
-Getting a key takes no signup: POST https://agentwares-stablecoin.vercel.app/v1/keys returns an API key with a $0 balance and a Stripe Checkout URL. Funding it does need a person — the Checkout URL is a hosted card page, so an unattended agent should hand that URL to its operator rather than retry. Sample mode needs neither: add sample=1 for a free, keyless example. Once funded, call with Authorization: Bearer <key> and the price comes off the balance. Send Idempotency-Key on a retry and the repeat is not charged again. GET https://agentwares-stablecoin.vercel.app/v1/credits reads the balance and POST buys more (packs: $10, $50, $200). A call that fails is refunded. Every wallet response carries a notice field saying whether card payments on this deployment are live or in Stripe test mode.
+Getting a key takes no signup: POST https://agentwares-stablecoin.vercel.app/v1/keys returns an API key with a $0 balance and fund_url, the top-up route. POST fund_url with the key and an amount to get a Stripe Checkout URL; that is a hosted card page a person completes, so an unattended agent should hand it to its operator rather than retry — or fund in USDC over x402 with no human at all. Sample mode needs neither: add sample=1 for a free, keyless example. Once funded, call with Authorization: Bearer <key> and the price comes off the balance. Send Idempotency-Key on a retry and the repeat is not charged again. GET https://agentwares-stablecoin.vercel.app/v1/credits reads the balance and POST buys more (packs: $10, $50, $200). A call that fails is refunded. Every wallet response carries a notice field saying whether card payments on this deployment are live or in Stripe test mode.
 
 Paying in USDC (x402 on Base, exact scheme, EIP-3009) is live and settles through the PayAI facilitator with no account, no API key and no human. An agent holding USDC on Base can read the 402, sign, and be served in one round trip; the accepts entry whose rail is x402 carries the address, network and amount. That is the rail to use if you are unattended. The card rail funds a prepaid balance and needs a person at a Checkout page.
 
@@ -21,7 +21,7 @@ Informational only, not financial, investment or legal advice. Figures are parse
 - [MCP endpoint (Streamable HTTP)](https://agentwares-stablecoin.vercel.app/mcp)
 - [HTTP endpoint](https://agentwares-stablecoin.vercel.app/v1/reserves/USDC): GET; 402 without credit; ?sample=1 is free; ?period=YYYY-MM for history
 - [Issuer registry](https://agentwares-stablecoin.vercel.app/v1/issuers): free; latest_period is null for the 20 issuers with no parsed report yet
-- [Buy a key](https://agentwares-stablecoin.vercel.app/v1/keys): POST with no auth; returns a key and a Stripe Checkout URL
+- [Buy a key](https://agentwares-stablecoin.vercel.app/v1/keys): POST with no auth; returns a key with a $0 balance and the top-up route (fund_url)
 - [Balance and top-ups](https://agentwares-stablecoin.vercel.app/v1/credits): GET with the key for the balance and ledger; POST for another pack
 - [pricing.json](https://agentwares-stablecoin.vercel.app/pricing.json)
 - [server.json (MCP registry)](https://agentwares-stablecoin.vercel.app/server.json)

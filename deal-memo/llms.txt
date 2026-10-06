@@ -4,7 +4,7 @@
 
 Every response is {data, sources[], as_of, confidence, notice}. Sample mode (sample=true) returns a realistic recorded example at no charge and never calls a model. Not financial advice; verify every figure before acting.
 
-Getting a key takes no signup: POST https://agentwares-deal-memo.vercel.app/v1/keys returns an API key with a $0 balance and a Stripe Checkout URL. Funding it does need a person — the Checkout URL is a hosted card page, so an unattended agent should hand that URL to its operator rather than retry. Sample mode needs neither: add sample=true for a free, keyless example. Once funded, send Authorization: Bearer <key> and the price comes off the balance. Send Idempotency-Key on a retry and the repeat is not charged again. GET https://agentwares-deal-memo.vercel.app/v1/credits reads the balance and POST buys more (packs: $10, $50, $200). A call that fails is refunded. Every wallet response carries a notice field saying whether card payments on this deployment are live or in Stripe test mode.
+Getting a key takes no signup: POST https://agentwares-deal-memo.vercel.app/v1/keys returns an API key with a $0 balance and fund_url, the top-up route. POST fund_url with the key and an amount to get a Stripe Checkout URL; that is a hosted card page a person completes, so an unattended agent should hand it to its operator rather than retry — or fund in USDC over x402 with no human at all. Sample mode needs neither: add sample=true for a free, keyless example. Once funded, send Authorization: Bearer <key> and the price comes off the balance. Send Idempotency-Key on a retry and the repeat is not charged again. GET https://agentwares-deal-memo.vercel.app/v1/credits reads the balance and POST buys more (packs: $10, $50, $200). A call that fails is refunded. Every wallet response carries a notice field saying whether card payments on this deployment are live or in Stripe test mode.
 
 Without credit the tool answers PAYMENT_REQUIRED, and that 402 carries the same instructions. Paying in USDC (x402 on Base, exact scheme, EIP-3009) is live and settles through the PayAI facilitator with no account, no API key and no human: read the accepts entry whose rail is x402, sign, and retry with the X-PAYMENT header. That is the rail to use if you are unattended. The card rail funds a prepaid balance and needs a person at a Checkout page.
 
@@ -13,7 +13,7 @@ Without credit the tool answers PAYMENT_REQUIRED, and that 402 carries the same 
 - [MCP server (Streamable HTTP)](https://agentwares-deal-memo.vercel.app/api/mcp): POST JSON-RPC; tools realestate_deal_memo, realestate_lookup
 - [HTTP endpoint: deal memo](https://agentwares-deal-memo.vercel.app/api/v1/memo): GET ?address=&strategy=&sample=true or POST JSON; 402 without credit
 - [HTTP endpoint: lookup](https://agentwares-deal-memo.vercel.app/api/v1/lookup): GET ?address=&kind=property|value|rent&sample=true
-- [Buy a key](https://agentwares-deal-memo.vercel.app/v1/keys): POST with no auth; returns a key and a Stripe Checkout URL
+- [Buy a key](https://agentwares-deal-memo.vercel.app/v1/keys): POST with no auth; returns a key with a $0 balance and the top-up route (fund_url)
 - [Balance and top-ups](https://agentwares-deal-memo.vercel.app/v1/credits): GET with the key for the balance and ledger; POST for another pack
 - [pricing.json](https://agentwares-deal-memo.vercel.app/pricing.json)
 - [server.json (MCP registry)](https://agentwares-deal-memo.vercel.app/server.json)
