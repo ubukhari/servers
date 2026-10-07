@@ -17,7 +17,14 @@ is checked the same way before it is followed. A URL check makes the `initialize
 only — it does not walk the OAuth discovery chain — and is limited to
 30 a minute per caller, counted per server instance. A name that is not in the
 registry answers `not_listed` with that next step: pass `url` instead.
-Every liveness answer ends with `monitor`, one line: To watch an endpoint continuously, agentcheck monitors one target hourly for free and emails you when it changes: call `agentcheck_create_target` on https://agentwares-agentcheck.vercel.app/api/mcp.
+Every liveness answer ends with `monitor`. Over HTTP it is a URL: agentcheck's
+"email me when this server changes" form with the server filled in (https://agentwares-agentcheck.vercel.app/watch?target=…),
+where a person leaves an address and, after one confirmation email, hears when the server
+stops answering or its tools change — no account, no key, free for one server. From the MCP
+tool it is one sentence carrying the same URL, prefilled for the server checked:
+"agentcheck checks one server every hour for free and emails when it stops answering or its tools change, with no account at https://agentwares-agentcheck.vercel.app/watch or through `agentcheck_create_target` on https://agentwares-agentcheck.vercel.app/api/mcp."
+Opened in a browser (`Accept: text/html`), `/v1/alive` answers with a page carrying the
+same form; every other client gets the JSON, and `format=json` forces it.
 Measured on a random sample of 1200 remote listings on 2026-10-06: 65.9% answer a stock client, 21.9% want a credential, and 11.8% are not an MCP server at the address they gave. Of the ones wanting a credential, 17.1% published nothing a stock client could discover.
 Do not probe the catalogue yourself. Every remote listing is probed once a month and the
 answers are served as static files, so reading them costs one request instead of 19,000
@@ -43,34 +50,36 @@ registers a client, never retries a refusal and never evades anything.
 ## What this cannot tell you
 
 - [Whether a server stays up after this check](https://agentwares-agentcheck.vercel.app/api/mcp): this is one check from outside, right now; agentcheck monitors one target hourly for free and emails you when it changes — call `agentcheck_create_target` on this MCP endpoint
+- [The same, for a person with only an email address](https://agentwares-agentcheck.vercel.app/watch): a server and an address, no account or key: one confirmation email, then an hourly check and an email when it stops answering or its tools change; `POST /api/v1/watch` with `{target, email}` is the same for an agent acting for that person
 
 ## MCP tools
 
-- `mcp_liveness_check` (name?, url?, skipCredentialCheck?): Make one `initialize` call to an MCP server's endpoint with no credential and report what
-a stock client gets. Name the server by its exact official-registry `name`, or by its
-endpoint `url` when it is not in the registry or is listed under another name — pass
-exactly one of the two.
+- `mcp_liveness_check` (name?, url?, skipCredentialCheck?): Makes one `initialize` call to an MCP server's endpoint with no credential and reports
+what a stock client gets. The server is named either by its exact official-registry
+`name`, or by its endpoint `url` when it is not in the registry or is listed under another
+name; exactly one of the two is accepted.
 
 Outcomes: `usable` (it connected and negotiated a protocol version), `needs_credential`
-(401 or 403 — by name, the answer then says whether a credential can be obtained in-band
+(401 or 403 — by name, the answer also says whether a credential can be obtained in-band
 or whether a person has to create one), `charged` (402, access is for sale),
 `unreachable` (not an MCP server there: wrong URL, dead host, or a 200 that is not
 JSON-RPC), and, for a name only, `local_only` (no remote endpoint; it must be spawned as a
-process) and `not_listed` (no server with that exact name — pass `url` instead).
+process) and `not_listed` (no server with that exact name; its endpoint can still be
+checked by `url`).
 
 A `url` must be public https: private, loopback, link-local, multicast and cloud-metadata
 addresses are refused, redirects are re-checked, and URL checks are limited to 30 a
-minute per caller. Call this before spending a call on a server; roughly two in five
-remote registry listings do not answer a stock client.
-- `mcp_liveness_explain_outcomes`: Return the six outcomes this server can report, what each means for an agent choosing a server from the registry, and what to do next for each. Makes no request and costs nothing; call it once to interpret mcp_liveness_check results.
-- `mcp_liveness_drift` (name, since?): Given a server's exact name in the official MCP registry, report which of its tools were
+minute per caller. Useful before relying on a server: roughly two in five remote registry
+listings do not answer a stock client.
+- `mcp_liveness_explain_outcomes`: Returns the six outcomes this server can report — usable, needs_credential, charged, unreachable, local_only and not_listed — what each means for an agent choosing a server from the registry, and the usual next move for each. A static reference: it makes no network request and its answer never changes between calls.
+- `mcp_liveness_drift` (name, since?): Given a server's exact name in the official MCP registry, reports which of its tools were
 added, removed, or had their description, input schema or output schema change between
-the month you name and the latest monthly snapshot.
+a named month and the latest monthly snapshot.
 
-Call this when a server worked before and is behaving differently now, when a prompt or
-an integration written against its tools has started failing, or before trusting a tool
-description you cached. A liveness check says it answers today; this says whether it is
-still the same server your code was written against.
+Useful when a server that worked before behaves differently now, when a prompt or an
+integration written against its tools has started failing, or before relying on a cached
+tool description. A liveness check says a server answers today; this says whether it is
+still the same server that code was written against.
 
 The answer names the changed tools and the kind of change. It does not diff the schemas
 themselves: the snapshots keep content hashes, not bodies, so `detail` hands back the
